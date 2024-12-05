@@ -1,0 +1,62 @@
+# Template file for Brave Browser for Void Linux distribution.
+# Many thanks to https://aur.archlinux.org/packages/brave-bin for aspects of this template.
+pkgname=brave-bin
+version=1.73.97
+revision=1
+epoch=1
+short_desc='Web browser that blocks ads and trackers by default (binary version).'
+maintainer="kveld9 <kveld9@disroot.org>"
+archs="x86_64"
+homepage="https://brave.com"
+license="Mozilla Public License Version 2.0"
+depends="alsa-lib gtk+3 libXScrnSaver nss"
+makedepends="unzip curl"
+provides="${pkgname%-bin}=$version brave-browser"
+conflicts="${pkgname%-bin}"
+nostrip="yes"
+wrksrc="${pkgname}-${version}"
+
+distfiles="https://github.com/brave/brave-browser/releases/download/v${version}/brave-browser-${version}-linux-amd64.zip"
+checksum='5a16479a83e1b8b9b2a15584456f0f18074aa7ac235b25bca2c733d8b18c3067'
+
+do_fetch() {
+    mkdir -p "${XBPS_SRCPKGDIR}/${pkgname}/files"
+    cd "${XBPS_SRCPKGDIR}/${pkgname}/files"
+    curl -LO "https://github.com/brave/brave-browser/releases/download/v${version}/brave-browser-${version}-linux-amd64.zip"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to download the ZIP file."
+        exit 1
+    fi
+}
+
+do_extract() {
+    mkdir -p "${wrksrc}"
+    if [ -f "${XBPS_SRCPKGDIR}/${pkgname}/files/brave-browser-${version}-linux-amd64.zip" ]; then
+        unzip "${XBPS_SRCPKGDIR}/${pkgname}/files/brave-browser-${version}-linux-amd64.zip" -d "${wrksrc}"
+        cp "${XBPS_SRCPKGDIR}/${pkgname}/files/${pkgname}.sh" "${wrksrc}/${pkgname}.sh"
+        cp "${XBPS_SRCPKGDIR}/${pkgname}/files/brave-browser.desktop" "${wrksrc}/brave-browser.desktop"
+    else
+        echo "Error: ZIP file not found in the expected path."
+        exit 1
+    fi
+}
+
+do_install() {
+    install -dm755 "${PKGDESTDIR}/usr/bin/brave"
+    install -Dm755 "${wrksrc}/${pkgname}.sh" "${PKGDESTDIR}/usr/bin/brave/brave-bin.sh"
+    install -Dm644 "${wrksrc}/brave-browser.desktop" "${PKGDESTDIR}/usr/share/applications/brave-browser.desktop"
+    install -Dm644 LICENSE "${PKGDESTDIR}/usr/share/licenses/$pkgname/LICENSE"
+
+    install -dm0755 "${PKGDESTDIR}/opt/$pkgname"
+    cp -a "${wrksrc}/"* "${PKGDESTDIR}/opt/$pkgname/"
+    chmod 4755 "${PKGDESTDIR}/opt/$pkgname/chrome-sandbox"
+}
+
+post_install() {
+    mkdir -p "${PKGDESTDIR}/usr/lib/brave"
+    cp -a "${PKGDESTDIR}/opt/$pkgname" "${PKGDESTDIR}/usr/lib/brave"
+}
+
+post_remove() {
+    vuninstall brave
+}
