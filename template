@@ -1,5 +1,5 @@
 # Template file for Brave Browser for Void Linux distribution.
-# Many thanks to https://aur.archlinux.org/packages/brave-bin for aspects of this template.
+# Many thanks to https://aur.archlinux.org/packages/brave-bin for some aspects of this template.
 pkgname=brave-bin
 version=1.73.97
 revision=1
