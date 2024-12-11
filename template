@@ -1,7 +1,7 @@
 # Template file for Brave Browser for Void Linux distribution.
 # Many thanks to https://aur.archlinux.org/packages/brave-bin for some aspects of this template.
 pkgname=brave-bin
-version=1.73.97
+version=1.73.101
 revision=1
 epoch=1
 short_desc='Web browser that blocks ads and trackers by default (binary version).'
@@ -17,7 +17,7 @@ nostrip="yes"
 wrksrc="${pkgname}-${version}"
 
 distfiles="https://github.com/brave/brave-browser/releases/download/v${version}/brave-browser-${version}-linux-amd64.zip"
-checksum='5a16479a83e1b8b9b2a15584456f0f18074aa7ac235b25bca2c733d8b18c3067'
+checksum='451c10d0a577bff88cc5749f37f07be6b7549f2e1c97bfba2e768496b8e85c44'
 
 do_fetch() {
     mkdir -p "${XBPS_SRCPKGDIR}/${pkgname}/files"
@@ -25,6 +25,12 @@ do_fetch() {
     curl -LO "https://github.com/brave/brave-browser/releases/download/v${version}/brave-browser-${version}-linux-amd64.zip"
     if [ $? -ne 0 ]; then
         echo "Error: Failed to download the ZIP file."
+        exit 1
+    fi
+
+    echo "${checksum}  brave-browser-${version}-linux-amd64.zip" | sha256sum -c -
+    if [ $? -ne 0 ]; then
+        echo "Error: Checksum verification failed."
         exit 1
     fi
 }
@@ -45,16 +51,11 @@ do_install() {
     install -dm755 "${PKGDESTDIR}/usr/bin/brave"
     install -Dm755 "${wrksrc}/${pkgname}.sh" "${PKGDESTDIR}/usr/bin/brave/brave-bin.sh"
     install -Dm644 "${wrksrc}/brave-browser.desktop" "${PKGDESTDIR}/usr/share/applications/brave-browser.desktop"
-    install -Dm644 LICENSE "${PKGDESTDIR}/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 "${wrksrc}/LICENSE" "${PKGDESTDIR}/usr/share/licenses/$pkgname/LICENSE"
 
     install -dm0755 "${PKGDESTDIR}/opt/$pkgname"
     cp -a "${wrksrc}/"* "${PKGDESTDIR}/opt/$pkgname/"
     chmod 4755 "${PKGDESTDIR}/opt/$pkgname/chrome-sandbox"
-}
-
-post_install() {
-    mkdir -p "${PKGDESTDIR}/usr/lib/brave"
-    cp -a "${PKGDESTDIR}/opt/$pkgname" "${PKGDESTDIR}/usr/lib/brave"
 }
 
 post_remove() {
