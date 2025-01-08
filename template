@@ -9,41 +9,41 @@ homepage="https://brave.com"
 license="Mozilla Public License Version 2.0"
 depends="alsa-lib gtk+3 libXScrnSaver nss"
 makedepends="unzip"
-provides="${pkgname%-bin}=$version brave-browser"
-conflicts="${pkgname%-bin}"
 nostrip="yes"
 wrksrc="${pkgname}-${version}"
 distfiles="https://github.com/brave/brave-browser/releases/download/v${version}/brave-browser-${version}-linux-amd64.zip"
-checksum='d1c8e91cb19b5ec8e5a9bdd0a86ad53ed2b1ce29e8d287b9892426016b3df25c'
-
-do_fetch() {
-    mkdir -p "${XBPS_SRCPKGDIR}/${pkgname}/files"
-    cd "${XBPS_SRCPKGDIR}/${pkgname}/files"
-    if [ $? -ne 0 ]; then
-        echo "Error: ZIP file not found."
-        exit 1
-    fi
-}
+checksum=d1c8e91cb19b5ec8e5a9bdd0a86ad53ed2b1ce29e8d287b9892426016b3df25c
 
 do_extract() {
     mkdir -p "${wrksrc}"
     cd "${wrksrc}"
-    unzip "${XBPS_SRCPKGDIR}/${pkgname}/files/brave-browser-${version}-linux-amd64.zip"
-    cp "${XBPS_SRCPKGDIR}/${pkgname}/files/${pkgname}.sh" "${wrksrc}/${pkgname}.sh"
-    cp "${XBPS_SRCPKGDIR}/${pkgname}/files/brave-browser.desktop" "${wrksrc}/brave-browser.desktop"
+    zipfile=$(find "${XBPS_SRCDISTDIR}" -name "brave-browser-${version}-linux-amd64.zip" | head -n 1)
+    
+    if [ -z "$zipfile" ]; then
+        echo "Error: zip file not found!"
+        return 1
+    else
+        unzip "$zipfile"
+    fi
+
+    for file in "${pkgname}.sh" "brave-browser.desktop"; do
+        cp "${XBPS_SRCPKGDIR}/${pkgname}/files/$file" "${wrksrc}/"
+    done
 }
 
 do_install() {
-    install -dm755 "${PKGDESTDIR}/usr/bin/brave"
-    install -Dm755 "${wrksrc}/${pkgname}.sh" "${PKGDESTDIR}/usr/bin/brave/brave-bin.sh"
+    install -dm755 "${PKGDESTDIR}/usr/bin"
+    install -dm755 "${PKGDESTDIR}/usr/share/applications"
+    install -dm755 "${PKGDESTDIR}/usr/share/licenses/$pkgname"
+    install -dm755 "${PKGDESTDIR}/opt/$pkgname"
+    install -Dm755 "${wrksrc}/${pkgname}.sh" "${PKGDESTDIR}/usr/bin/${pkgname}.sh"
     install -Dm644 "${wrksrc}/brave-browser.desktop" "${PKGDESTDIR}/usr/share/applications/brave-browser.desktop"
     install -Dm644 "${wrksrc}/LICENSE" "${PKGDESTDIR}/usr/share/licenses/$pkgname/LICENSE"
 
-    install -dm0755 "${PKGDESTDIR}/opt/$pkgname"
+    for file in LICENSE brave-browser.desktop "${pkgname}.sh"; do
+        rm -f "${wrksrc}/$file"
+    done
+
     cp -a "${wrksrc}/"* "${PKGDESTDIR}/opt/$pkgname/"
     chmod 4755 "${PKGDESTDIR}/opt/$pkgname/chrome-sandbox"
-}
-
-post_remove() {
-    vuninstall brave
 }
